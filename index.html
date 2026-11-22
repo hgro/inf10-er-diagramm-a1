@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tippkarten Bibliothek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: ruhig, ermutigend, klar – Hilfe für 15-Jährige, die festhängen
+   IDEA: drei Karteikarten aus dem Bibliothekskatalog, farbig gestapelt wie am Lehrerpult
+   PICTURE: die Karten selbst; Tipp 2 zeigt das Diagramm-Gerüst als Zeichnung
+   COLOUR and TYPE: tiefes Bibliotheksgrün als Band, Karten grün / gelb / koralle; Atkinson Hyperlegible
+   LAYOUT: Auftrag oben einklappbar, darunter drei Karten nebeneinander, unter 860px untereinander */
+:root{color-scheme:light dark;
+--bg:light-dark(#f3f5f4,#111614);--ink:light-dark(#14201b,#e8efeb);--quiet:light-dark(#4d5c55,#a7b6ae);
+--band:light-dark(#1d4a3c,#16352c);--bandink:#f1f7f3;--line:light-dark(#c9d3ce,#2c3833);
+--c1:light-dark(#dff2e6,#173326);--b1:light-dark(#2f8f5b,#5cc48a);
+--c2:light-dark(#fff2bf,#3a3112);--b2:light-dark(#b98a00,#e3b931);
+--c3:light-dark(#ffe0d8,#3d201a);--b3:light-dark(#c4503a,#f08a73);
+--paper:light-dark(#ffffff,#1a211e)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 "Atkinson Hyperlegible",system-ui,sans-serif;overflow-x:clip}
+header{background:var(--band);color:var(--bandink);padding:clamp(24px,4vw,44px) max(5vw,16px) clamp(20px,3vw,32px)}
+.wrap{max-width:1180px;margin:0 auto}
+h1{font-size:clamp(30px,4.4vw,44px);line-height:1.05;margin:0 0 8px;text-wrap:balance}
+.sub{margin:0;opacity:.88;max-width:62ch}
+details.auftrag{margin-top:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:0 16px}
+details.auftrag summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:700}
+details.auftrag p{margin:0 0 14px;max-width:70ch}
+main{padding:clamp(24px,4vw,48px) max(5vw,16px) 40px}
+.rule{display:flex;gap:10px;align-items:center;margin:0 auto 22px;max-width:1180px;color:var(--quiet);font-size:16px}
+.rule b{color:var(--ink)}
+.cards{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;align-items:start}
+@media(max-width:860px){.cards{grid-template-columns:minmax(0,1fr)}}
+.card{position:relative;border-radius:6px;border:2px solid var(--b);background:var(--c);padding:22px 20px 20px;box-shadow:0 2px 0 var(--line),0 10px 24px -18px rgba(0,0,0,.5);transition:opacity .25s}
+.card::before{content:"";position:absolute;left:50%;bottom:12px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--bg);border:2px solid var(--b)}
+.card.k1{--c:var(--c1);--b:var(--b1)}.card.k2{--c:var(--c2);--b:var(--b2)}.card.k3{--c:var(--c3);--b:var(--b3)}
+.card .tag{display:inline-block;font-size:14px;font-weight:700;color:var(--b);border-bottom:2px solid var(--b);margin-bottom:6px}
+.card h2{font-size:24px;line-height:1.15;margin:0 0 12px}
+.card .cover{color:var(--quiet);margin:0 0 16px}
+.card .body{display:none;padding-bottom:22px}
+.card.open .body{display:block}.card.open .cover,.card.open .actions{display:none}
+.card.locked{opacity:.55}
+.actions{padding-bottom:22px}
+button{font:inherit;font-weight:700;min-height:44px;padding:8px 18px;border-radius:8px;border:2px solid var(--b,var(--band));background:var(--paper);color:var(--ink);cursor:pointer}
+button.main{background:var(--b);color:var(--paper);border-color:var(--b)}
+button:disabled{cursor:not-allowed;opacity:.7}
+button:focus-visible,summary:focus-visible{outline:3px solid var(--b,#ffd84a);outline-offset:2px}
+.ask{display:none;margin-top:12px;padding:12px;border-radius:8px;background:var(--paper);border:1px dashed var(--b)}
+.ask.show{display:block}.ask p{margin:0 0 10px}
+.ask .row{display:flex;gap:10px;flex-wrap:wrap}
+.lock{font-size:15px;color:var(--quiet);margin:0}
+.body p{margin:0 0 12px}
+.steps{display:grid;gap:8px;margin:4px 0 12px}
+.step{background:var(--paper);border-radius:8px;padding:10px 12px;border-left:4px solid var(--b)}
+.step b{display:block}
+.fig{background:var(--paper);border-radius:8px;padding:8px;margin:0 0 12px}
+.fig svg{display:block;width:100%;height:auto}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 12px}
+.col{background:var(--paper);border-radius:8px;padding:10px 12px}
+.col h3{margin:0 0 4px;font-size:18px}
+.col ul{margin:0;padding-left:18px}
+u{text-decoration-thickness:2px;text-underline-offset:3px}
+footer{max-width:1180px;margin:28px auto 0;display:flex;gap:14px;flex-wrap:wrap;align-items:center;color:var(--quiet);font-size:15px}
+footer button{--b:var(--quiet)}
+.check{max-width:1180px;margin:34px auto 0;background:var(--paper);border:2px solid var(--band);border-radius:6px;padding:clamp(18px,3vw,28px)}
+.check h2{font-size:26px;line-height:1.15;margin:0 0 6px}
+.check .intro{margin:0 0 16px;color:var(--quiet);max-width:70ch}
+.crit{list-style:none;margin:0;padding:0;counter-reset:k}
+.crit li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);counter-increment:k}
+.crit li span::before{content:counter(k) ". ";font-weight:700;color:var(--quiet)}
+.crit .tg{display:flex;gap:8px}
+.crit button{--b:var(--line);min-width:54px;padding:6px 12px;font-size:20px;line-height:1}
+.crit button[aria-pressed=true].ok{--b:var(--b1);background:var(--c1);border-color:var(--b1)}
+.crit button[aria-pressed=true].q{--b:var(--b3);background:var(--c3);border-color:var(--b3)}
+.sum{margin:14px 0 0;font-weight:700}
+@media(max-width:560px){.crit li{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>Tippkarten zur Stadtbibliothek</h1>
+  <p class="sub">Auftragskarte 1 · Das ER-Modell. Probiere es zuerst allein. Deck eine Karte erst auf, wenn du nicht weiterkommst.</p>
+  <details class="auftrag">
+    <summary>Den Auftrag noch einmal lesen</summary>
+    <p>Die Stadtbibliothek möchte ihre Ausleihe mit einer Datenbank verwalten. Zu jedem Buch werden die ISBN, der Titel, der Autor und das Erscheinungsjahr gespeichert. Zu jedem Leser speichert die Bibliothek eine Lesernummer, den Vornamen, den Nachnamen und die Adresse. Leser können Bücher ausleihen.</p>
+    <p>Markiere Entitätstypen grün, Attribute blau und die Beziehung rot. Zeichne dann das ER-Diagramm und unterstreiche die Primärschlüssel.</p>
+  </details>
+</div></header>
+
+<main>
+  <p class="rule"><b>So geht's:</b> Die Karten öffnen sich nur der Reihe nach. Erst Tipp 1, dann Tipp 2, dann Tipp 3.</p>
+  <div class="cards">
+
+    <article class="card k1" id="tipp1">
+      <span class="tag">Tipp 1</span>
+      <h2>Denkanstoß</h2>
+      <p class="cover">Hilft dir, die Dinge im Text zu sortieren.</p>
+      <div class="actions"><button class="main" data-open="1">Tipp 1 aufdecken</button></div>
+      <div class="body">
+        <p>Geh den Text Wort für Wort durch und stell dir bei jedem Substantiv eine Frage:</p>
+        <div class="steps">
+          <div class="step"><b>Hat es selbst Eigenschaften?</b>Dann ist es ein <strong>Entitätstyp</strong>. Zeichne ein Rechteck.</div>
+          <div class="step"><b>Beschreibt es nur etwas anderes?</b>Dann ist es ein <strong>Attribut</strong>. Zeichne eine Ellipse.</div>
+          <div class="step"><b>Ist es ein Verb?</b>Dann ist es die <strong>Beziehung</strong>. Zeichne eine Raute.</div>
+        </div>
+        <p>Beispiel: Ein <em>Buch</em> hat einen Titel und einen Autor, also hat es Eigenschaften. Der <em>Titel</em> hat selbst keine Eigenschaften, er beschreibt das Buch.</p>
+      </div>
+    </article>
+
+    <article class="card k2 locked" id="tipp2">
+      <span class="tag">Tipp 2</span>
+      <h2>Das Gerüst</h2>
+      <p class="cover">Zeigt dir, wie das Diagramm aufgebaut ist.</p>
+      <div class="actions">
+        <p class="lock" data-lock="2">Öffnet sich, wenn du Tipp 1 aufgedeckt hast.</p>
+        <button class="main" data-open="2" disabled>Tipp 2 aufdecken</button>
+        <div class="ask" data-ask="2"><p>Hast du Tipp 1 schon ausprobiert?</p><div class="row"><button class="main" data-yes="2">Ja, aufdecken</button><button data-no="2">Noch nicht</button></div></div>
+      </div>
+      <div class="body">
+        <p>Du brauchst zwei Rechtecke: <strong>Buch</strong> und <strong>Leser</strong>. Dazwischen steht eine Raute mit <strong>leiht aus</strong>.</p>
+        <div class="fig"><svg viewBox="0 0 520 190" role="img" aria-label="Gerüst: Buch, leiht aus, Leser. Die Ellipsen fehlen noch.">
+          <g fill="none" stroke="currentColor" stroke-width="1.6">
+            <line x1="150" y1="130" x2="190" y2="130"/><line x1="330" y1="130" x2="370" y2="130"/>
+            <rect x="20" y="106" width="130" height="48" rx="2"/>
+            <polygon points="190,130 260,96 330,130 260,164"/>
+            <rect x="370" y="106" width="130" height="48" rx="2"/>
+          </g>
+          <g fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 4" opacity=".55">
+            <ellipse cx="45" cy="40" rx="34" ry="16"/><ellipse cx="125" cy="40" rx="34" ry="16"/>
+            <line x1="45" y1="56" x2="70" y2="106"/><line x1="125" y1="56" x2="100" y2="106"/>
+            <ellipse cx="395" cy="40" rx="34" ry="16"/><ellipse cx="475" cy="40" rx="34" ry="16"/>
+            <line x1="395" y1="56" x2="420" y2="106"/><line x1="475" y1="56" x2="450" y2="106"/>
+          </g>
+          <g font-family="Atkinson Hyperlegible, sans-serif" fill="currentColor" text-anchor="middle">
+            <text x="85" y="135" font-size="17" font-weight="700">Buch</text>
+            <text x="260" y="135" font-size="15">leiht aus</text>
+            <text x="435" y="135" font-size="17" font-weight="700">Leser</text>
+            <text x="45" y="45" font-size="15" opacity=".6">?</text><text x="125" y="45" font-size="15" opacity=".6">?</text>
+            <text x="395" y="45" font-size="15" opacity=".6">?</text><text x="475" y="45" font-size="15" opacity=".6">?</text>
+          </g>
+        </svg></div>
+        <p>Jetzt fehlen nur noch die Ellipsen. Welche Angaben aus dem Text gehören zum Buch, welche zum Leser?</p>
+      </div>
+    </article>
+
+    <article class="card k3 locked" id="tipp3">
+      <span class="tag">Tipp 3</span>
+      <h2>Fast die Lösung</h2>
+      <p class="cover">Nennt dir alle Attribute. Danach musst du nur noch zeichnen.</p>
+      <div class="actions">
+        <p class="lock" data-lock="3">Öffnet sich, wenn du Tipp 2 aufgedeckt hast.</p>
+        <button class="main" data-open="3" disabled>Tipp 3 aufdecken</button>
+        <div class="ask" data-ask="3"><p>Hast du mit Tipp 2 schon weitergezeichnet?</p><div class="row"><button class="main" data-yes="3">Ja, aufdecken</button><button data-no="3">Noch nicht</button></div></div>
+      </div>
+      <div class="body">
+        <div class="cols">
+          <div class="col"><h3>Buch</h3><ul><li><u>isbn</u></li><li>titel</li><li>autor</li><li>erscheinungsjahr</li></ul></div>
+          <div class="col"><h3>Leser</h3><ul><li><u>lesernummer</u></li><li>vorname</li><li>nachname</li><li>adresse</li></ul></div>
+        </div>
+        <p>Die <u>ISBN</u> und die <u>Lesernummer</u> sind eindeutig: Keine zwei Bücher haben dieselbe ISBN, keine zwei Leser dieselbe Nummer. Darum sind sie die Primärschlüssel und werden unterstrichen.</p>
+        <p>Titel oder Namen können doppelt vorkommen. Sie eignen sich nicht als Primärschlüssel.</p>
+      </div>
+    </article>
+
+  </div>
+  <section class="check" id="partnercheck" aria-labelledby="pc-h">
+    <h2 id="pc-h">Rückseite: Checkliste Partnercheck</h2>
+    <p class="intro">Tauscht eure Blätter. Prüft das Diagramm eures Partners Punkt für Punkt. Setzt einen Haken, wenn der Punkt erfüllt ist, und ein Fragezeichen, wenn nicht. Erklärt euch danach gegenseitig die Fragezeichen.</p>
+    <ol class="crit">
+      <li><span>Jeder Entitätstyp ist ein Rechteck: <strong>Buch</strong> und <strong>Leser</strong>.</span><div class="tg"></div></li>
+      <li><span>Jedes Attribut ist eine Ellipse und hängt am richtigen Rechteck.</span><div class="tg"></div></li>
+      <li><span>Alle acht Angaben aus dem Text kommen vor, keine fehlt.</span><div class="tg"></div></li>
+      <li><span>Jeder Entitätstyp hat genau einen unterstrichenen Primärschlüssel.</span><div class="tg"></div></li>
+      <li><span>Der Primärschlüssel ist wirklich eindeutig: kein Name, kein Titel.</span><div class="tg"></div></li>
+      <li><span>Die Beziehung ist eine Raute, mit einem Verb beschriftet und mit beiden Rechtecken verbunden.</span><div class="tg"></div></li>
+    </ol>
+    <p class="sum" id="sum" aria-live="polite"></p>
+  </section>
+  <footer>
+    <span>Nach dem Partnercheck: Verbessere dein eigenes Diagramm mit einem andersfarbigen Stift.</span>
+    <button id="reset">Alles zurücksetzen</button>
+  </footer>
+</main>
+
+<script>
+{
+  const card = n => document.getElementById('tipp' + n);
+  const open = n => {
+    card(n).classList.add('open');
+    const next = card(n + 1);
+    if (next) {
+      next.classList.remove('locked');
+      next.querySelector('[data-open]').disabled = false;
+      const l = next.querySelector('[data-lock]'); if (l) l.hidden = true;
+    }
+    card(n).querySelector('h2').setAttribute('tabindex', '-1');
+    card(n).querySelector('h2').focus();
+  };
+  document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => {
+    const n = Number(b.dataset.open);
+    if (n === 1) { open(1); return; }
+    b.hidden = true;
+    card(n).querySelector('[data-ask]').classList.add('show');
+  }));
+  document.querySelectorAll('[data-yes]').forEach(b => b.addEventListener('click', () => open(Number(b.dataset.yes))));
+  document.querySelectorAll('[data-no]').forEach(b => b.addEventListener('click', () => {
+    const n = Number(b.dataset.no);
+    card(n).querySelector('[data-ask]').classList.remove('show');
+    card(n).querySelector('[data-open]').hidden = false;
+  }));
+  const rows = [...document.querySelectorAll('.crit li')];
+  const sum = document.getElementById('sum');
+  const update = () => {
+    const ok = rows.filter(r => r.dataset.v === 'ok').length;
+    const q = rows.filter(r => r.dataset.v === 'q').length;
+    if (!ok && !q) { sum.textContent = ''; return; }
+    sum.textContent = `${ok} von ${rows.length} Punkten erfüllt` + (q ? `, ${q} Fragezeichen zum Besprechen.` : '.') + (ok === rows.length ? ' Stark!' : '');
+  };
+  rows.forEach((r, i) => {
+    r.querySelector('.tg').innerHTML = `<button class="ok" aria-pressed="false" aria-label="Punkt ${i + 1} erfüllt">✓</button><button class="q" aria-pressed="false" aria-label="Punkt ${i + 1} nicht erfüllt">?</button>`;
+    r.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      const v = b.classList.contains('ok') ? 'ok' : 'q';
+      r.dataset.v = r.dataset.v === v ? '' : v;
+      r.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(r.dataset.v === (x.classList.contains('ok') ? 'ok' : 'q'))));
+      update();
+    }));
+  });
+  document.getElementById('reset').addEventListener('click', () => {
+    rows.forEach(r => { r.dataset.v = ''; r.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false')); });
+    update();
+    [1, 2, 3].forEach(n => {
+      const c = card(n);
+      c.classList.remove('open');
+      const btn = c.querySelector('[data-open]'); btn.hidden = false;
+      const ask = c.querySelector('[data-ask]'); if (ask) ask.classList.remove('show');
+      if (n > 1) { c.classList.add('locked'); btn.disabled = true; const l = c.querySelector('[data-lock]'); if (l) l.hidden = false; }
+    });
+    window.scrollTo({top: 0});
+  });
+}
+</script>
+</body>
+</html>
